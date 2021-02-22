@@ -159,72 +159,72 @@ mod test_vec3 {
 
     #[test]
     fn test_add() {
-        let v1 = Vec3::new(1f64, 2f64, 3f64);
-        let v2 = Vec3::new(4f64, 5f64, 6f64);
-        assert_eq!(&v1 + &v2, Vec3::new(5f64, 7f64, 9f64));
-        assert_eq!(&v2 + &v1, Vec3::new(5f64, 7f64, 9f64));
-        let v3 = Vec3::new(1f64, 1f64, 1f64);
-        assert_eq!(&v1 + &v3, Vec3::new(2f64, 3f64, 4f64));
+        let v1 = Vec3::new(1., 2., 3.);
+        let v2 = Vec3::new(4., 5., 6.);
+        assert_eq!(&v1 + &v2, Vec3::new(5., 7., 9.));
+        assert_eq!(&v2 + &v1, Vec3::new(5., 7., 9.));
+        let v3 = Vec3::new(1., 1., 1.);
+        assert_eq!(&v1 + &v3, Vec3::new(2., 3., 4.));
     }
 
     #[test]
     fn test_sub() {
-        let v1 = Vec3::new(4f64, 5f64, 6f64);
-        let v2 = Vec3::new(1f64, 2f64, 3f64);
-        assert_eq!(&v1 - &v2, Vec3::new(3f64, 3f64, 3f64));
-        assert_eq!(&v2 - &v1, Vec3::new(-3f64, -3f64, -3f64));
-        let v3 = Vec3::new(1f64, 1f64, 1f64);
-        assert_eq!(&v1 - &v3, Vec3::new(3f64, 4f64, 5f64));
+        let v1 = Vec3::new(4., 5., 6.);
+        let v2 = Vec3::new(1., 2., 3.);
+        assert_eq!(&v1 - &v2, Vec3::new(3., 3., 3.));
+        assert_eq!(&v2 - &v1, Vec3::new(-3., -3., -3.));
+        let v3 = Vec3::new(1., 1., 1.);
+        assert_eq!(&v1 - &v3, Vec3::new(3., 4., 5.));
     }
 
     #[test]
     fn test_mul() {
-        let v1 = Vec3::new(1f64, 2f64, 3f64);
-        assert_eq!(&v1 * 2f64, Vec3::new(2f64, 4f64, 6f64));
+        let v1 = Vec3::new(1., 2., 3.);
+        assert_eq!(&v1 * 2., Vec3::new(2., 4., 6.));
 
-        let v2 = Vec3::new(4f64, 5f64, 6f64);
-        assert_eq!(&v1 * &v2, Vec3::new(4f64, 10f64, 18f64));
+        let v2 = Vec3::new(4., 5., 6.);
+        assert_eq!(&v1 * &v2, Vec3::new(4., 10., 18.));
     }
 
     #[test]
     fn test_index() {
-        let v = Vec3::new(1f64, 2f64, 3f64);
-        assert!((v[Point3Index::X] - 1f64).abs() < f64::EPSILON);
-        assert!((v[Point3Index::Y] - 2f64).abs() < f64::EPSILON);
-        assert!((v[Point3Index::Z] - 3f64).abs() < f64::EPSILON);
+        let v = Vec3::new(1., 2., 3.);
+        assert!((v[Point3Index::X] - 1.).abs() < f64::EPSILON);
+        assert!((v[Point3Index::Y] - 2.).abs() < f64::EPSILON);
+        assert!((v[Point3Index::Z] - 3.).abs() < f64::EPSILON);
     }
 
     #[test]
     fn test_add_assign() {
-        let mut v1 = Vec3::new(1f64, 2f64, 3f64);
-        let v2 = Vec3::new(1f64, 2f64, 3f64);
+        let mut v1 = Vec3::new(1., 2., 3.);
+        let v2 = Vec3::new(1., 2., 3.);
         v1 += &v2;
-        assert_eq!(v1, Vec3::new(2f64, 4f64, 6f64));
-        assert_eq!(v2, Vec3::new(1f64, 2f64, 3f64));
+        assert_eq!(v1, Vec3::new(2., 4., 6.));
+        assert_eq!(v2, Vec3::new(1., 2., 3.));
     }
 
     #[test]
     fn test_mul_assign() {
-        let mut v = Vec3::new(1f64, 2f64, 3f64);
-        v *= 2f64;
-        assert_eq!(v, Vec3::new(2f64, 4f64, 6f64));
+        let mut v = Vec3::new(1., 2., 3.);
+        v *= 2.;
+        assert_eq!(v, Vec3::new(2., 4., 6.));
     }
     #[test]
     fn test_div_assign() {
-        let mut v = Vec3::new(2f64, 4f64, 6f64);
-        v /= 2f64;
-        assert_eq!(v, Vec3::new(1f64, 2f64, 3f64));
+        let mut v = Vec3::new(2., 4., 6.);
+        v /= 2.;
+        assert_eq!(v, Vec3::new(1., 2., 3.));
     }
 
     #[test]
     fn test_length() {
-        let v = Vec3::new(2f64, 4f64, 6f64);
+        let v = Vec3::new(2., 4., 6.);
         assert!((v.length() - 56f64.sqrt()).abs() < f64::EPSILON);
     }
 
     #[test]
     fn test_display() {
-        let v = Vec3::new(0.1f64, 0.2f64, 0.3f64);
+        let v = Vec3::new(0.1, 0.2, 0.3);
         assert_eq!(format!("{}", v), "25 51 76");
     }
 }
@@ -258,8 +258,8 @@ impl<'a> Ray<'a> {
 pub fn ray_color(ray: &Ray) -> Color {
     let unit_dir = ray.dir.unit_vector();
     let t = 0.5 * (unit_dir.y + 1.0);
-    let unit = Color::new(1f64, 1f64, 1f64);
-    let c1 = &unit * (1f64 - t);
+    let unit = Color::new(1., 1., 1.);
+    let c1 = &unit * (1. - t);
     let color_base = Color::new(0.5, 0.7, 1.0);
     let c2 = &color_base * t;
     &c1 + &c2
@@ -271,13 +271,13 @@ mod test_ray {
 
     #[test]
     fn test_at() {
-        let p = Point3::new(0f64, 0f64, 0f64);
-        let d = Vec3::new(1f64, 2f64, 3f64);
+        let p = Point3::new(0., 0., 0.);
+        let d = Vec3::new(1., 2., 3.);
         let r = Ray::new(&p, &d);
 
-        let p1 = r.at(1f64);
-        assert_eq!(p1, Vec3::new(1f64, 2f64, 3f64));
-        let p2 = r.at(2f64);
-        assert_eq!(p2, Vec3::new(2f64, 4f64, 6f64));
+        let p1 = r.at(1.);
+        assert_eq!(p1, Vec3::new(1., 2., 3.));
+        let p2 = r.at(2.);
+        assert_eq!(p2, Vec3::new(2., 4., 6.));
     }
 }
