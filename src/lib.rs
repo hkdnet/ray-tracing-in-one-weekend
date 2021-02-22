@@ -250,9 +250,12 @@ impl<'a> Ray<'a> {
         self.orig + &delta
     }
 
+    // Looks like that this is a toy function.
+    // We can't distinguish the color of ray from the ray itself.
+    // For now, the color is deternined by y.
+    // It's a blended color between white(0, 0, 0) at the bottom and light blue(0.5, 0.7, 1.0) at the top.
     pub fn color(&self) -> Color {
         let unit_dir = self.dir.unit_vector();
-        // TODO: what's this?
         let t = 0.5 * (unit_dir.y + 1.0);
         let unit = Color::new(1f64, 1f64, 1f64);
         let c1 = &unit * (1f64 - t);
