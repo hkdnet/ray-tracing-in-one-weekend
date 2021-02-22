@@ -1,4 +1,4 @@
-use hkdray::{Point3, Ray, Vec3};
+use hkdray::{ray_color, Point3, Ray, Vec3};
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: usize = 400;
@@ -30,7 +30,7 @@ fn main() {
             let u = (i as f64) / w_base;
             let v = (j as f64) / h_base;
             let d = &lower_left_corner + &(&(&(&horizontal * u) + &(&vertical * v)) - &origin);
-            let color = Ray::new(&origin, &d).color();
+            let color = ray_color(&Ray::new(&origin, &d));
             println!("{}", color);
         }
     }
