@@ -26,15 +26,27 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
-    fn length(self) -> f64 {
+    fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
+
+    fn dot(&self, rhs: &Vec3) -> f64 {
+        self.x * rhs.x + self.y * rhs.y + self.z + rhs.z
+    }
+
+    fn cross(&self, rhs: &Vec3) -> Vec3 {
+        Vec3::new(
+            self.y * rhs.z - self.z * rhs.y,
+            self.z * rhs.x - self.x * rhs.z,
+            self.x * rhs.y - self.y * rhs.x,
+        )
     }
 }
 
-impl std::ops::Add<Vec3> for Vec3 {
+impl std::ops::Add<&Vec3> for &Vec3 {
     type Output = Vec3;
 
-    fn add(self, rhs: Vec3) -> Self::Output {
+    fn add(self, rhs: &Vec3) -> Self::Output {
         Vec3 {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -42,10 +54,10 @@ impl std::ops::Add<Vec3> for Vec3 {
         }
     }
 }
-impl std::ops::Sub<Vec3> for Vec3 {
+impl std::ops::Sub<&Vec3> for &Vec3 {
     type Output = Vec3;
 
-    fn sub(self, rhs: Vec3) -> Self::Output {
+    fn sub(self, rhs: &Vec3) -> Self::Output {
         Vec3 {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
@@ -75,7 +87,7 @@ impl std::ops::Index<ColorIndex> for Color {
         }
     }
 }
-impl std::ops::Mul<f64> for Vec3 {
+impl std::ops::Mul<f64> for &Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: f64) -> Self::Output {
         Vec3 {
@@ -85,8 +97,18 @@ impl std::ops::Mul<f64> for Vec3 {
         }
     }
 }
-impl std::ops::AddAssign<Vec3> for Vec3 {
-    fn add_assign(&mut self, rhs: Vec3) {
+impl std::ops::Mul<&Vec3> for &Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: &Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
+        }
+    }
+}
+impl std::ops::AddAssign<&Vec3> for Vec3 {
+    fn add_assign(&mut self, rhs: &Vec3) {
         self.x += rhs.x;
         self.y += rhs.y;
         self.z += rhs.z;
@@ -107,6 +129,12 @@ impl std::ops::DivAssign<f64> for Vec3 {
     }
 }
 
+impl std::fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.x, self.y, self.z)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Point3Index;
@@ -116,14 +144,29 @@ mod test {
     fn test_add() {
         let v1 = Vec3::new(1f64, 2f64, 3f64);
         let v2 = Vec3::new(4f64, 5f64, 6f64);
-        assert_eq!(v1 + v2, Vec3::new(5f64, 7f64, 9f64));
+        assert_eq!(&v1 + &v2, Vec3::new(5f64, 7f64, 9f64));
+        assert_eq!(&v2 + &v1, Vec3::new(5f64, 7f64, 9f64));
+        let v3 = Vec3::new(1f64, 1f64, 1f64);
+        assert_eq!(&v1 + &v3, Vec3::new(2f64, 3f64, 4f64));
     }
 
     #[test]
     fn test_sub() {
         let v1 = Vec3::new(4f64, 5f64, 6f64);
         let v2 = Vec3::new(1f64, 2f64, 3f64);
-        assert_eq!(v1 - v2, Vec3::new(3f64, 3f64, 3f64));
+        assert_eq!(&v1 - &v2, Vec3::new(3f64, 3f64, 3f64));
+        assert_eq!(&v2 - &v1, Vec3::new(-3f64, -3f64, -3f64));
+        let v3 = Vec3::new(1f64, 1f64, 1f64);
+        assert_eq!(&v1 - &v3, Vec3::new(3f64, 4f64, 5f64));
+    }
+
+    #[test]
+    fn test_mul() {
+        let v1 = Vec3::new(1f64, 2f64, 3f64);
+        assert_eq!(&v1 * 2f64, Vec3::new(2f64, 4f64, 6f64));
+
+        let v2 = Vec3::new(4f64, 5f64, 6f64);
+        assert_eq!(&v1 * &v2, Vec3::new(4f64, 10f64, 18f64));
     }
 
     #[test]
@@ -138,8 +181,9 @@ mod test {
     fn test_add_assign() {
         let mut v1 = Vec3::new(1f64, 2f64, 3f64);
         let v2 = Vec3::new(1f64, 2f64, 3f64);
-        v1 += v2;
+        v1 += &v2;
         assert_eq!(v1, Vec3::new(2f64, 4f64, 6f64));
+        assert_eq!(v2, Vec3::new(1f64, 2f64, 3f64));
     }
 
     #[test]
@@ -158,7 +202,13 @@ mod test {
     #[test]
     fn test_length() {
         let v = Vec3::new(2f64, 4f64, 6f64);
-        assert!((v.length() - 56f64.sqrt()).abs() < f64::EPSILON)
+        assert!((v.length() - 56f64.sqrt()).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_display() {
+        let v = Vec3::new(1f64, 2f64, 3f64);
+        assert_eq!(format!("{}", v), format!("{} {} {}", v.x, v.y, v.z));
     }
 }
 
