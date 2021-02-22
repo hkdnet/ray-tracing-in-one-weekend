@@ -129,9 +129,15 @@ impl std::ops::DivAssign<f64> for Vec3 {
     }
 }
 
-impl std::fmt::Display for Vec3 {
+impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}", self.x, self.y, self.z)
+        write!(
+            f,
+            "{} {} {}",
+            (255.999 * self.x) as i32,
+            (255.999 * self.y) as i32,
+            (255.999 * self.z) as i32
+        )
     }
 }
 
@@ -207,8 +213,8 @@ mod test {
 
     #[test]
     fn test_display() {
-        let v = Vec3::new(1f64, 2f64, 3f64);
-        assert_eq!(format!("{}", v), format!("{} {} {}", v.x, v.y, v.z));
+        let v = Vec3::new(0.1f64, 0.2f64, 0.3f64);
+        assert_eq!(format!("{}", v), "25 51 76");
     }
 }
 
