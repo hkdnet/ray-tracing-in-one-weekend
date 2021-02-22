@@ -38,6 +38,10 @@ impl Vec3 {
             self.x * rhs.y - self.y * rhs.x,
         )
     }
+
+    pub fn unit_vector(&self) -> Vec3 {
+        self / self.length()
+    }
 }
 
 impl std::ops::Add<&Vec3> for &Vec3 {
@@ -101,6 +105,16 @@ impl std::ops::Mul<&Vec3> for &Vec3 {
             x: self.x * rhs.x,
             y: self.y * rhs.y,
             z: self.z * rhs.z,
+        }
+    }
+}
+impl std::ops::Div<f64> for &Vec3 {
+    type Output = Vec3;
+    fn div(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
         }
     }
 }
@@ -234,6 +248,17 @@ impl<'a> Ray<'a> {
     pub fn at(&self, t: f64) -> Point3 {
         let delta = self.dir * t;
         self.orig + &delta
+    }
+
+    pub fn color(&self) -> Color {
+        let unit_dir = self.dir.unit_vector();
+        // TODO: what's this?
+        let t = 0.5 * (unit_dir.y + 1.0);
+        let unit = Color::new(1f64, 1f64, 1f64);
+        let c1 = &unit * (1f64 - t);
+        let color_base = Color::new(0.5, 0.7, 1.0);
+        let c2 = &color_base * t;
+        &c1 + &c2
     }
 }
 
