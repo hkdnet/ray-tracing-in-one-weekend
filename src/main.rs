@@ -230,15 +230,8 @@ fn main() {
         let j = IMAGE_HEIGHT - 1 - j;
         eprint!("\rScanlines remaining: {}", j);
         for i in 0..IMAGE_WIDTH {
-            let r = i as f64 / w_base;
-            let g = j as f64 / h_base;
-            let b = 0.25f64;
-
-            let ir = (255.999 * r) as i32;
-            let ig = (255.999 * g) as i32;
-            let ib = (255.999 * b) as i32;
-
-            println!("{} {} {}", ir, ig, ib);
+            let color = Color::new((i as f64) / w_base, (j as f64) / h_base, 0.25);
+            println!("{}", color);
         }
     }
 
