@@ -18,7 +18,7 @@ fn main() {
 
     // print ppm
     // header
-    println!("P3\n{} {}]\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
+    println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
 
     let w_base = (IMAGE_WIDTH - 1) as f64;
     let h_base = (IMAGE_HEIGHT - 1) as f64;
