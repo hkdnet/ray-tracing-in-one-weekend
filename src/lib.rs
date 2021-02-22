@@ -139,7 +139,7 @@ impl std::fmt::Display for Color {
 }
 
 #[cfg(test)]
-mod test {
+mod test_vec3 {
     use super::Point3Index;
     use super::Vec3;
 
@@ -212,5 +212,44 @@ mod test {
     fn test_display() {
         let v = Vec3::new(0.1f64, 0.2f64, 0.3f64);
         assert_eq!(format!("{}", v), "25 51 76");
+    }
+}
+
+pub struct Ray<'a> {
+    orig: &'a Point3,
+    dir: &'a Vec3,
+}
+
+impl<'a> Ray<'a> {
+    pub fn new(orig: &'a Point3, dir: &'a Vec3) -> Self {
+        Ray { orig, dir }
+    }
+    pub fn origin(&self) -> &'a Point3 {
+        &self.orig
+    }
+    pub fn direction(&self) -> &'a Vec3 {
+        &self.dir
+    }
+
+    pub fn at(&self, t: f64) -> Point3 {
+        let delta = self.dir * t;
+        self.orig + &delta
+    }
+}
+
+#[cfg(test)]
+mod test_ray {
+    use super::*;
+
+    #[test]
+    fn test_at() {
+        let p = Point3::new(0f64, 0f64, 0f64);
+        let d = Vec3::new(1f64, 2f64, 3f64);
+        let r = Ray::new(&p, &d);
+
+        let p1 = r.at(1f64);
+        assert_eq!(p1, Vec3::new(1f64, 2f64, 3f64));
+        let p2 = r.at(2f64);
+        assert_eq!(p2, Vec3::new(2f64, 4f64, 6f64));
     }
 }
