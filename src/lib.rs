@@ -86,6 +86,16 @@ impl std::ops::Index<ColorIndex> for Color {
         }
     }
 }
+impl std::ops::Mul<f64> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+        }
+    }
+}
 impl std::ops::Mul<f64> for &Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: f64) -> Self::Output {
@@ -262,9 +272,10 @@ impl<'a> Ray<'a> {
 // For now, the color is deternined by y.
 // It's a blended color between white(0, 0, 0) at the bottom and light blue(0.5, 0.7, 1.0) at the top.
 pub fn ray_color(ray: &Ray) -> Color {
-    if hit_sphere(&Vec3::new(0., 0., -1.), 0.5, ray) {
-        // A red sphere!
-        return Color::new(1., 0., 0.);
+    let center = Vec3::new(0., 0., -1.);
+    if let Some(t) = hit_sphere(&center, 0.5, ray) {
+        let normal = (ray.at(t) - center).unit_vector();
+        return (normal + Vec3::new(1., 1., 1.)) * 0.5;
     }
 
     let unit_dir = ray.dir.unit_vector();
@@ -276,15 +287,18 @@ pub fn ray_color(ray: &Ray) -> Color {
     &c1 + &c2
 }
 
-pub fn hit_sphere(center: &Vec3, rad: f64, ray: &Ray) -> bool {
+pub fn hit_sphere(center: &Vec3, rad: f64, ray: &Ray) -> Option<f64> {
     let oc = ray.origin() - center;
     let a = ray.direction().dot(ray.direction());
     let b = 2.0 * oc.dot(ray.direction());
     let c = oc.dot(&oc) - rad * rad;
 
     let discriminant = b * b - 4. * a * c;
-    // has 2 answers?
-    discriminant > 0.
+    if discriminant < 0. {
+        None
+    } else {
+        Some((-b - discriminant.sqrt()) / 2. / a)
+    }
 }
 
 #[cfg(test)]
