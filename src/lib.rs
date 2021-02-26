@@ -28,7 +28,7 @@ impl Vec3 {
     }
 
     pub fn dot(&self, rhs: &Vec3) -> f64 {
-        self.x * rhs.x + self.y * rhs.y + self.z + rhs.z
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
     pub fn cross(&self, rhs: &Vec3) -> Vec3 {
@@ -224,6 +224,14 @@ mod test_vec3 {
     fn test_display() {
         let v = Vec3::new(0.1, 0.2, 0.3);
         assert_eq!(format!("{}", v), "25 51 76");
+    }
+
+    #[test]
+    fn test_dot() {
+        let v1 = Vec3::new(1., 2., 3.);
+        let v2 = Vec3::new(1., 2., 3.);
+        let ans = v1.dot(&v2);
+        assert!((ans - 14.).abs() < f64::EPSILON);
     }
 }
 
