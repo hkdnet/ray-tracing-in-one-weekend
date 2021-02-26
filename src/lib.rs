@@ -24,7 +24,11 @@ impl Vec3 {
     }
 
     pub fn length(&self) -> f64 {
-        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+        self.length_squared().sqrt()
+    }
+
+    pub fn length_squared(&self) -> f64 {
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     pub fn dot(&self, rhs: &Vec3) -> f64 {
@@ -117,6 +121,16 @@ impl std::ops::Mul<&Vec3> for &Vec3 {
     }
 }
 impl std::ops::Div<f64> for &Vec3 {
+    type Output = Vec3;
+    fn div(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
+        }
+    }
+}
+impl std::ops::Div<f64> for Vec3 {
     type Output = Vec3;
     fn div(self, rhs: f64) -> Self::Output {
         Vec3 {
@@ -315,5 +329,56 @@ mod test_ray {
         assert_eq!(p1, Vec3::new(1., 2., 3.));
         let p2 = r.at(2.);
         assert_eq!(p2, Vec3::new(2., 4., 6.));
+    }
+}
+
+pub struct HitRecord {
+    p: Point3,
+    normal: Vec3,
+    t: f64,
+}
+
+trait Hittable {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+}
+
+struct Sphere {
+    center: Point3,
+    radius: f64,
+}
+
+impl Sphere {
+    fn new(center: Point3, radius: f64) -> Self {
+        Sphere { center, radius }
+    }
+}
+
+impl Hittable for Sphere {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let oc = ray.origin() - &self.center;
+        let a = ray.direction().length();
+        let half_b = oc.dot(ray.direction());
+        let c = oc.length_squared() - self.radius * self.radius;
+
+        let discriminant = half_b.powf(2.) - a * c;
+
+        if discriminant < 0. {
+            return None;
+        }
+        let sqrtd = discriminant.sqrt();
+
+        // Search nearer root
+        let root = (-half_b - sqrtd) / a;
+        if root < t_min || t_max < root {
+            let root = (-half_b + sqrtd) / a;
+            if root < t_min || t_max < root {
+                // we don't care that hit
+                return None;
+            }
+        }
+
+        let p = ray.at(root);
+        let normal = (&p - &self.center) / self.radius;
+        Some(HitRecord { t: root, p, normal })
     }
 }
