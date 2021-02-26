@@ -29,7 +29,11 @@ fn main() {
         for i in 0..IMAGE_WIDTH {
             let u = (i as f64) / w_base;
             let v = (j as f64) / h_base;
-            let d = &lower_left_corner + &(&(&(&horizontal * u) + &(&vertical * v)) - &origin);
+            let d = &lower_left_corner;
+            let point_v = -&origin;
+            let point_v = point_v + &horizontal * u;
+            let point_v = point_v + &vertical * v;
+            let d = d + point_v;
             let color = ray_color(&Ray::new(&origin, &d));
             println!("{}", color);
         }
