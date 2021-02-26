@@ -5,7 +5,7 @@ const IMAGE_WIDTH: usize = 400;
 const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
 
 const VIEWPORT_HEIGHT: f64 = 2.0;
-const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT / ASPECT_RATIO;
+const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * ASPECT_RATIO;
 const FOCAL_LENGTH: f64 = 1.0; // screen is where at z = -1.
 
 // x is right, y is up, z is *back* (to be consistent with right-handed coordinate system)
@@ -29,11 +29,7 @@ fn main() {
         for i in 0..IMAGE_WIDTH {
             let u = (i as f64) / w_base;
             let v = (j as f64) / h_base;
-            let d = &lower_left_corner;
-            let point_v = -&origin;
-            let point_v = point_v + &horizontal * u;
-            let point_v = point_v + &vertical * v;
-            let d = d + point_v;
+            let d = &lower_left_corner + (&horizontal * u) + (&vertical * v) - &origin;
             let color = ray_color(&Ray::new(&origin, &d));
             println!("{}", color);
         }
