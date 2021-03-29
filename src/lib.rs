@@ -400,3 +400,28 @@ impl Hittable for Sphere {
         Some(HitRecord::new(root, p, ray, outward_normal))
     }
 }
+
+struct HittableList {
+    list: Vec<Box<dyn Hittable>>,
+}
+impl HittableList {
+    pub fn add(&mut self, hittable: Box<Hittable>) {
+        self.list.push(hittable);
+    }
+
+    pub fn clear(&mut self) {
+        self.list.clear()
+    }
+}
+
+impl Hittable for HittableList {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        for boxed in self.list.iter() {
+            let hittable = boxed.as_ref();
+            if let Some(rec) = hittable.hit(ray, t_min, t_max) {
+                return Some(rec);
+            }
+        }
+        None
+    }
+}
