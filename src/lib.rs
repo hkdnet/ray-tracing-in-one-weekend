@@ -303,15 +303,15 @@ pub fn ray_color(ray: &Ray) -> Color {
 
 pub fn hit_sphere(center: &Vec3, rad: f64, ray: &Ray) -> Option<f64> {
     let oc = ray.origin() - center;
-    let a = ray.direction().dot(ray.direction());
-    let b = 2.0 * oc.dot(ray.direction());
-    let c = oc.dot(&oc) - rad * rad;
+    let a = ray.direction().length_squared();
+    let half_b = oc.dot(ray.direction());
+    let c = oc.length_squared() - rad * rad;
 
-    let discriminant = b * b - 4. * a * c;
+    let discriminant = half_b.powf(2.) - a * c;
     if discriminant < 0. {
         None
     } else {
-        Some((-b - discriminant.sqrt()) / 2. / a)
+        Some((-half_b - discriminant.sqrt()) / a)
     }
 }
 
