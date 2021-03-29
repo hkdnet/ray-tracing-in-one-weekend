@@ -1,4 +1,4 @@
-use hkdray::{ray_color, Point3, Ray, Vec3};
+use hkdray::{ray_color, HittableList, Point3, Ray, Sphere, Vec3};
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: usize = 400;
@@ -23,6 +23,12 @@ fn main() {
     let w_base = (IMAGE_WIDTH - 1) as f64;
     let h_base = (IMAGE_HEIGHT - 1) as f64;
 
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0., 0., -1.), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0., -100.5, -1.), 100.)));
+
+    let boxed_world = Box::new(world);
+
     for j in 0..IMAGE_HEIGHT {
         let j = IMAGE_HEIGHT - 1 - j;
         eprint!("\rScanlines remaining: {}", j);
@@ -30,7 +36,7 @@ fn main() {
             let u = (i as f64) / w_base;
             let v = (j as f64) / h_base;
             let d = &lower_left_corner + (&horizontal * u) + (&vertical * v) - &origin;
-            let color = ray_color(&Ray::new(&origin, &d));
+            let color = ray_color(&Ray::new(&origin, &d), boxed_world.as_ref());
             println!("{}", color);
         }
     }

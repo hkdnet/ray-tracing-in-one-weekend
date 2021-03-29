@@ -283,13 +283,11 @@ impl<'a> Ray<'a> {
 
 // Looks like that this is a toy function.
 // We can't distinguish the color of ray from the ray itself.
-// For now, the color is deternined by y.
+// For now, the color is deternined by y when it doesn't hit anything.
 // It's a blended color between white(0, 0, 0) at the bottom and light blue(0.5, 0.7, 1.0) at the top.
-pub fn ray_color(ray: &Ray) -> Color {
-    let center = Vec3::new(0., 0., -1.);
-    if let Some(t) = hit_sphere(&center, 0.5, ray) {
-        let normal = (ray.at(t) - center).unit_vector();
-        return (normal + Vec3::new(1., 1., 1.)) * 0.5;
+pub fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color {
+    if let Some(rec) = world.hit(ray, 0., f64::INFINITY) {
+        return (rec.normal + Vec3::new(1., 1., 1.)) * 0.5;
     }
 
     let unit_dir = ray.dir.unit_vector();
@@ -356,17 +354,17 @@ impl HitRecord {
     }
 }
 
-trait Hittable {
+pub trait Hittable {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
-struct Sphere {
+pub struct Sphere {
     center: Point3,
     radius: f64,
 }
 
 impl Sphere {
-    fn new(center: Point3, radius: f64) -> Self {
+    pub fn new(center: Point3, radius: f64) -> Self {
         Sphere { center, radius }
     }
 }
@@ -374,7 +372,7 @@ impl Sphere {
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin() - &self.center;
-        let a = ray.direction().length();
+        let a = ray.direction().length_squared();
         let half_b = oc.dot(ray.direction());
         let c = oc.length_squared() - self.radius * self.radius;
 
@@ -401,11 +399,16 @@ impl Hittable for Sphere {
     }
 }
 
-struct HittableList {
+#[derive(Default)]
+pub struct HittableList {
     list: Vec<Box<dyn Hittable>>,
 }
 impl HittableList {
-    pub fn add(&mut self, hittable: Box<Hittable>) {
+    pub fn new() -> Self {
+        HittableList { list: vec![] }
+    }
+
+    pub fn add(&mut self, hittable: Box<dyn Hittable>) {
         self.list.push(hittable);
     }
 
@@ -416,12 +419,15 @@ impl HittableList {
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let mut closest = t_max;
+        let mut ret = None;
         for boxed in self.list.iter() {
             let hittable = boxed.as_ref();
-            if let Some(rec) = hittable.hit(ray, t_min, t_max) {
-                return Some(rec);
+            if let Some(rec) = hittable.hit(ray, t_min, closest) {
+                closest = rec.t;
+                ret = Some(rec);
             }
         }
-        None
+        ret
     }
 }
