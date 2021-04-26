@@ -51,9 +51,10 @@ fn write_color(pixel_color: Color, samples_per_pixel: i32) {
     let g = pixel_color[ColorIndex::G] * scale;
     let b = pixel_color[ColorIndex::B] * scale;
 
-    let r = r.clamp(0., 0.999) * 256.;
-    let g = g.clamp(0., 0.999) * 256.;
-    let b = b.clamp(0., 0.999) * 256.;
+    // For gamma-correction, sqrt is required.
+    let r = r.sqrt().clamp(0., 0.999) * 256.;
+    let g = g.sqrt().clamp(0., 0.999) * 256.;
+    let b = b.sqrt().clamp(0., 0.999) * 256.;
 
     println!("{} {} {}", r as i32, g as i32, b as i32)
 }
