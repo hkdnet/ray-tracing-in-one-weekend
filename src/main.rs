@@ -25,6 +25,7 @@ fn main() {
     world.add(Box::new(Sphere::new(Point3::new(0., -100.5, -1.), 100.)));
 
     let boxed_world = Box::new(world);
+    let max_depth = 50;
 
     for j in 0..IMAGE_HEIGHT {
         let j = IMAGE_HEIGHT - 1 - j;
@@ -35,7 +36,7 @@ fn main() {
                 let u = (i as f64 + random::<f64>()) / w_base;
                 let v = (j as f64 + random::<f64>()) / h_base;
                 let ray = camera.get_ray(u, v);
-                color += &ray_color(&ray, boxed_world.as_ref());
+                color += &ray_color(&ray, boxed_world.as_ref(), max_depth);
             }
             write_color(color, samples_per_pixel);
         }

@@ -1,3 +1,5 @@
+use rand::random;
+
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Vec3 {
     x: f64,
@@ -46,6 +48,19 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Vec3 {
         self / self.length()
     }
+
+    fn random(min: f64, max: f64) -> Vec3 {
+        Vec3::new(
+            random_double(min, max),
+            random_double(min, max),
+            random_double(min, max),
+        )
+    }
+}
+fn random_double(min: f64, max: f64) -> f64 {
+    let scale = max - min;
+    let r = random::<f64>();
+    min + r * scale
 }
 
 impl std::ops::Neg for Vec3 {
@@ -283,13 +298,29 @@ impl Ray {
     }
 }
 
+fn random_in_unit_sphere() -> Point3 {
+    loop {
+        let p = Vec3::random(-1., 1.);
+        if p.length_squared() < 1. {
+            return p;
+        }
+    }
+}
+
 // Looks like that this is a toy function.
 // We can't distinguish the color of ray from the ray itself.
 // For now, the color is deternined by y when it doesn't hit anything.
 // It's a blended color between white(0, 0, 0) at the bottom and light blue(0.5, 0.7, 1.0) at the top.
-pub fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color {
+pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32) -> Color {
+    if depth == 0 {
+        return Color::new(0., 0., 0.);
+    }
     if let Some(rec) = world.hit(ray, 0., f64::INFINITY) {
-        return (rec.normal + Vec3::new(1., 1., 1.)) * 0.5;
+        let target = &rec.p + rec.normal + random_in_unit_sphere();
+        let dir = target - &rec.p;
+        let boxed_p = Box::new(rec.p);
+        let c = ray_color(&Ray::new(boxed_p, Box::new(dir)), world, depth - 1);
+        return c * 0.5;
     }
 
     let unit_dir = ray.dir.unit_vector();
