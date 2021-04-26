@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Vec3 {
     x: f64,
     y: f64,
@@ -259,25 +259,27 @@ mod test_vec3 {
     }
 }
 
-pub struct Ray<'a> {
-    orig: &'a Point3,
-    dir: &'a Vec3,
+pub struct Ray {
+    orig: Box<Point3>,
+    dir: Box<Vec3>,
 }
 
-impl<'a> Ray<'a> {
-    pub fn new(orig: &'a Point3, dir: &'a Vec3) -> Self {
+impl Ray {
+    pub fn new(orig: Box<Point3>, dir: Box<Vec3>) -> Self {
         Ray { orig, dir }
     }
-    pub fn origin(&self) -> &'a Point3 {
+    pub fn origin(&self) -> &Point3 {
         &self.orig
     }
-    pub fn direction(&self) -> &'a Vec3 {
+    pub fn direction(&self) -> &Vec3 {
         &self.dir
     }
 
     pub fn at(&self, t: f64) -> Point3 {
-        let delta = self.dir * t;
-        self.orig + &delta
+        let dir = self.dir.as_ref();
+        let delta = dir * t;
+        let orig = self.orig.as_ref();
+        orig + delta
     }
 }
 
@@ -321,7 +323,7 @@ mod test_ray {
     fn test_at() {
         let p = Point3::new(0., 0., 0.);
         let d = Vec3::new(1., 2., 3.);
-        let r = Ray::new(&p, &d);
+        let r = Ray::new(Box::new(p), Box::new(d));
 
         let p1 = r.at(1.);
         assert_eq!(p1, Vec3::new(1., 2., 3.));
@@ -429,5 +431,38 @@ impl Hittable for HittableList {
             }
         }
         ret
+    }
+}
+
+pub struct Camera {
+    origin: Point3,
+    lower_left_corner: Point3,
+    horizontal: Vec3,
+    vertical: Vec3,
+}
+
+impl Camera {
+    pub fn new(aspect_ratio: f64, viewport_height: f64, focal_length: f64) -> Self {
+        let viewport_width = aspect_ratio * viewport_height;
+
+        let origin = Point3::new(0., 0., 0.);
+        let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
+        let vertical = Vec3::new(0.0, viewport_height, 0.0);
+        let lower_left_corner =
+            &origin - &horizontal / 2. - &vertical / 2. - Vec3::new(0., 0., focal_length);
+
+        Camera {
+            origin,
+            lower_left_corner,
+            horizontal,
+            vertical,
+        }
+    }
+
+    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+        let dir =
+            &self.lower_left_corner + &self.horizontal * u + &self.vertical * v - &self.origin;
+        let cloned = self.origin.clone();
+        Ray::new(Box::new(cloned), Box::new(dir))
     }
 }

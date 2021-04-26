@@ -1,20 +1,17 @@
-use hkdray::{ray_color, HittableList, Point3, Ray, Sphere, Vec3};
+use hkdray::{ray_color, Camera, Color, ColorIndex, HittableList, Point3, Sphere};
+use rand::random;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: usize = 400;
 const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
 
 const VIEWPORT_HEIGHT: f64 = 2.0;
-const VIEWPORT_WIDTH: f64 = VIEWPORT_HEIGHT * ASPECT_RATIO;
 const FOCAL_LENGTH: f64 = 1.0; // screen is where at z = -1.
 
 // x is right, y is up, z is *back* (to be consistent with right-handed coordinate system)
 fn main() {
-    let origin = Point3::new(0., 0., 0.);
-    let horizontal = Vec3::new(VIEWPORT_WIDTH, 0., 0.);
-    let vertical = Vec3::new(0., VIEWPORT_HEIGHT, 0.);
-    let lower_left_corner: Point3 =
-        &(&(&origin - &(&horizontal / 2.)) - &(&vertical / 2.)) - &Vec3::new(0., 0., FOCAL_LENGTH);
+    let samples_per_pixel = 100;
+    let camera = Camera::new(ASPECT_RATIO, VIEWPORT_HEIGHT, FOCAL_LENGTH);
 
     // print ppm
     // header
@@ -31,15 +28,31 @@ fn main() {
 
     for j in 0..IMAGE_HEIGHT {
         let j = IMAGE_HEIGHT - 1 - j;
-        eprint!("\rScanlines remaining: {}", j);
+        eprint!("\rScanlines remaining: {:03}", j);
         for i in 0..IMAGE_WIDTH {
-            let u = (i as f64) / w_base;
-            let v = (j as f64) / h_base;
-            let d = &lower_left_corner + (&horizontal * u) + (&vertical * v) - &origin;
-            let color = ray_color(&Ray::new(&origin, &d), boxed_world.as_ref());
-            println!("{}", color);
+            let mut color = Color::new(0., 0., 0.);
+            for _ in 0..samples_per_pixel {
+                let u = (i as f64 + random::<f64>()) / w_base;
+                let v = (j as f64 + random::<f64>()) / h_base;
+                let ray = camera.get_ray(u, v);
+                color += &ray_color(&ray, boxed_world.as_ref());
+            }
+            write_color(color, samples_per_pixel);
         }
     }
 
     eprintln!("\nDone.");
+}
+
+fn write_color(pixel_color: Color, samples_per_pixel: i32) {
+    let scale = 1f64 / (samples_per_pixel as f64);
+    let r = pixel_color[ColorIndex::R] * scale;
+    let g = pixel_color[ColorIndex::G] * scale;
+    let b = pixel_color[ColorIndex::B] * scale;
+
+    let r = r.clamp(0., 0.999) * 256.;
+    let g = g.clamp(0., 0.999) * 256.;
+    let b = b.clamp(0., 0.999) * 256.;
+
+    println!("{} {} {}", r as i32, g as i32, b as i32)
 }
