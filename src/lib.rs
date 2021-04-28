@@ -315,7 +315,8 @@ pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32) -> Color {
     if depth == 0 {
         return Color::new(0., 0., 0.);
     }
-    if let Some(rec) = world.hit(ray, 0., f64::INFINITY) {
+    // Use 0.001 as t_min instead of 0.0 because of the inaccuracy of floating numbers.
+    if let Some(rec) = world.hit(ray, 0.001, f64::INFINITY) {
         let target = &rec.p + rec.normal + random_in_unit_sphere();
         let dir = target - &rec.p;
         let boxed_p = Box::new(rec.p);
