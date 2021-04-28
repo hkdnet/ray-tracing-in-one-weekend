@@ -306,6 +306,9 @@ fn random_in_unit_sphere() -> Point3 {
         }
     }
 }
+fn random_unit_vector() -> Vec3 {
+    random_in_unit_sphere().unit_vector()
+}
 
 // Looks like that this is a toy function.
 // We can't distinguish the color of ray from the ray itself.
@@ -317,7 +320,7 @@ pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32) -> Color {
     }
     // Use 0.001 as t_min instead of 0.0 because of the inaccuracy of floating numbers.
     if let Some(rec) = world.hit(ray, 0.001, f64::INFINITY) {
-        let target = &rec.p + rec.normal + random_in_unit_sphere();
+        let target = &rec.p + rec.normal + random_unit_vector();
         let dir = target - &rec.p;
         let boxed_p = Box::new(rec.p);
         let c = ray_color(&Ray::new(boxed_p, Box::new(dir)), world, depth - 1);
