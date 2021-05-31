@@ -1,5 +1,8 @@
-use hkdray::{ray_color, Camera, Color, ColorIndex, HittableList, Point3, Sphere};
+use hkdray::{
+    ray_color, Camera, Color, ColorIndex, HittableList, Lambertian, Metal, Point3, Sphere,
+};
 use rand::random;
+use std::rc::Rc;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: usize = 400;
@@ -21,8 +24,32 @@ fn main() {
     let h_base = (IMAGE_HEIGHT - 1) as f64;
 
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0., 0., -1.), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0., -100.5, -1.), 100.)));
+
+    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.)));
+    let material_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8)));
+    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(0., -100.5, -1.),
+        100.,
+        material_ground,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0., 0., -1.),
+        0.5,
+        material_center,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1., 0., -1.),
+        0.5,
+        material_left,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(1., 0., -1.),
+        0.5,
+        material_right,
+    )));
 
     let boxed_world = Box::new(world);
     let max_depth = 50;

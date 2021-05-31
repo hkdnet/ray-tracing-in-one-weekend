@@ -1,4 +1,5 @@
 use rand::random;
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Vec3 {
@@ -55,6 +56,11 @@ impl Vec3 {
             random_double(min, max),
             random_double(min, max),
         )
+    }
+    // Return true if the vector is close to zero in all dimensions.
+    pub fn is_near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
 }
 fn random_double(min: f64, max: f64) -> f64 {
@@ -328,11 +334,12 @@ pub fn ray_color(ray: &Ray, world: &dyn Hittable, depth: u32) -> Color {
     }
     // Use 0.001 as t_min instead of 0.0 because of the inaccuracy of floating numbers.
     if let Some(rec) = world.hit(ray, 0.001, f64::INFINITY) {
-        let target = &rec.p + random_in_hemisphere(&rec.normal);
-        let dir = target - &rec.p;
-        let boxed_p = Box::new(rec.p);
-        let c = ray_color(&Ray::new(boxed_p, Box::new(dir)), world, depth - 1);
-        return c * 0.5;
+        let res = rec.material.scatter(ray, &rec);
+        if res.reflect {
+            return &res.attenuation * &ray_color(&res.scattered, world, depth - 1);
+        } else {
+            return Color::new(0., 0., 0.);
+        }
     }
 
     let unit_dir = ray.dir.unit_vector();
@@ -378,12 +385,19 @@ mod test_ray {
 pub struct HitRecord {
     p: Point3,
     normal: Vec3,
+    material: Rc<dyn Material>,
     t: f64,
     front_face: bool,
 }
 
 impl HitRecord {
-    pub fn new(t: f64, p: Point3, ray: &Ray, outward_normal: Vec3) -> Self {
+    pub fn new(
+        t: f64,
+        p: Point3,
+        ray: &Ray,
+        outward_normal: Vec3,
+        material: Rc<dyn Material>,
+    ) -> Self {
         let front_face = ray.direction().dot(&outward_normal) < 0.;
         let normal = if front_face {
             outward_normal
@@ -393,6 +407,7 @@ impl HitRecord {
         HitRecord {
             t,
             p,
+            material,
             normal,
             front_face,
         }
@@ -406,11 +421,16 @@ pub trait Hittable {
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Rc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Self {
-        Sphere { center, radius }
+    pub fn new(center: Point3, radius: f64, material: Rc<dyn Material>) -> Self {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -440,7 +460,13 @@ impl Hittable for Sphere {
 
         let p = ray.at(root);
         let outward_normal = (&p - &self.center) / self.radius;
-        Some(HitRecord::new(root, p, ray, outward_normal))
+        Some(HitRecord::new(
+            root,
+            p,
+            ray,
+            outward_normal,
+            self.material.clone(),
+        ))
     }
 }
 
@@ -507,5 +533,68 @@ impl Camera {
             &self.lower_left_corner + &self.horizontal * u + &self.vertical * v - &self.origin;
         let cloned = self.origin.clone();
         Ray::new(Box::new(cloned), Box::new(dir))
+    }
+}
+
+pub trait Material {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> ScatterResult;
+}
+
+pub struct ScatterResult {
+    reflect: bool, // TODO: name
+    attenuation: Color,
+    scattered: Ray,
+}
+
+pub struct Lambertian {
+    albedo: Color,
+}
+impl Lambertian {
+    pub fn new(albedo: Color) -> Self {
+        Lambertian { albedo }
+    }
+}
+impl Material for Lambertian {
+    fn scatter(&self, _r_in: &Ray, rec: &HitRecord) -> ScatterResult {
+        // Note we could just as well only scatter with some probability 𝑝 and have attenuation be 𝑎𝑙𝑏𝑒𝑑𝑜/𝑝. Your choice.
+        let mut scatter_direction = &rec.normal + random_unit_vector();
+
+        if scatter_direction.is_near_zero() {
+            scatter_direction = rec.normal.clone();
+        }
+
+        let scattered = Ray::new(Box::new(rec.p.clone()), Box::new(scatter_direction));
+        let attenuation = self.albedo.clone();
+        ScatterResult {
+            reflect: true,
+            attenuation,
+            scattered,
+        }
+    }
+}
+
+pub struct Metal {
+    albedo: Color,
+}
+fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    v - &((n * v.dot(&n)) * 2.)
+}
+
+impl Material for Metal {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> ScatterResult {
+        let reflected = reflect(&r_in.direction().unit_vector(), &rec.normal);
+        let scattered = Ray::new(Box::new(rec.p.clone()), Box::new(reflected));
+        let attenuation = self.albedo.clone();
+        let reflect = scattered.direction().dot(&rec.normal) > 0.;
+        ScatterResult {
+            reflect,
+            attenuation,
+            scattered,
+        }
+    }
+}
+impl Metal {
+    pub fn new(albedo: Color) -> Self {
+        Metal { albedo }
     }
 }
