@@ -281,12 +281,12 @@ mod test_vec3 {
 }
 
 pub struct Ray {
-    orig: Box<Point3>,
-    dir: Box<Vec3>,
+    orig: Rc<Point3>,
+    dir: Rc<Vec3>,
 }
 
 impl Ray {
-    pub fn new(orig: Box<Point3>, dir: Box<Vec3>) -> Self {
+    pub fn new(orig: Rc<Point3>, dir: Rc<Vec3>) -> Self {
         Ray { orig, dir }
     }
     pub fn origin(&self) -> &Point3 {
@@ -373,7 +373,7 @@ mod test_ray {
     fn test_at() {
         let p = Point3::new(0., 0., 0.);
         let d = Vec3::new(1., 2., 3.);
-        let r = Ray::new(Box::new(p), Box::new(d));
+        let r = Ray::new(Rc::new(p), Rc::new(d));
 
         let p1 = r.at(1.);
         assert_eq!(p1, Vec3::new(1., 2., 3.));
@@ -383,7 +383,7 @@ mod test_ray {
 }
 
 pub struct HitRecord {
-    p: Point3,
+    p: Rc<Point3>,
     normal: Vec3,
     material: Rc<dyn Material>,
     t: f64,
@@ -393,7 +393,7 @@ pub struct HitRecord {
 impl HitRecord {
     pub fn new(
         t: f64,
-        p: Point3,
+        p: Rc<Point3>,
         ray: &Ray,
         outward_normal: Vec3,
         material: Rc<dyn Material>,
@@ -462,7 +462,7 @@ impl Hittable for Sphere {
         let outward_normal = (&p - &self.center) / self.radius;
         Some(HitRecord::new(
             root,
-            p,
+            Rc::new(p),
             ray,
             outward_normal,
             self.material.clone(),
@@ -472,14 +472,14 @@ impl Hittable for Sphere {
 
 #[derive(Default)]
 pub struct HittableList {
-    list: Vec<Box<dyn Hittable>>,
+    list: Vec<Rc<dyn Hittable>>,
 }
 impl HittableList {
     pub fn new() -> Self {
         HittableList { list: vec![] }
     }
 
-    pub fn add(&mut self, hittable: Box<dyn Hittable>) {
+    pub fn add(&mut self, hittable: Rc<dyn Hittable>) {
         self.list.push(hittable);
     }
 
@@ -504,7 +504,7 @@ impl Hittable for HittableList {
 }
 
 pub struct Camera {
-    origin: Point3,
+    origin: Rc<Point3>,
     lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
@@ -521,7 +521,7 @@ impl Camera {
             &origin - &horizontal / 2. - &vertical / 2. - Vec3::new(0., 0., focal_length);
 
         Camera {
-            origin,
+            origin: Rc::new(origin),
             lower_left_corner,
             horizontal,
             vertical,
@@ -529,10 +529,10 @@ impl Camera {
     }
 
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {
-        let dir =
-            &self.lower_left_corner + &self.horizontal * u + &self.vertical * v - &self.origin;
+        let dir = &self.lower_left_corner + &self.horizontal * u + &self.vertical * v
+            - self.origin.as_ref();
         let cloned = self.origin.clone();
-        Ray::new(Box::new(cloned), Box::new(dir))
+        Ray::new(cloned, Rc::new(dir))
     }
 }
 
@@ -563,7 +563,7 @@ impl Material for Lambertian {
             scatter_direction = rec.normal.clone();
         }
 
-        let scattered = Ray::new(Box::new(rec.p.clone()), Box::new(scatter_direction));
+        let scattered = Ray::new(rec.p.clone(), Rc::new(scatter_direction));
         let attenuation = self.albedo.clone();
         ScatterResult {
             reflect: true,
@@ -585,8 +585,8 @@ impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> ScatterResult {
         let reflected = reflect(&r_in.direction().unit_vector(), &rec.normal);
         let scattered = Ray::new(
-            Box::new(rec.p.clone()),
-            Box::new(reflected + random_in_unit_sphere() * self.fuzz),
+            rec.p.clone(),
+            Rc::new(reflected + random_in_unit_sphere() * self.fuzz),
         );
         let attenuation = self.albedo.clone();
         let reflect = scattered.direction().dot(&rec.normal) > 0.;
