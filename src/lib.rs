@@ -608,10 +608,7 @@ impl Metal {
 }
 
 fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
-    let mut cos_theta = (-uv).dot(n);
-    if cos_theta > 1.0 {
-        cos_theta = 1.0;
-    }
+    let cos_theta = (-uv).dot(n).min(1.);
 
     let r_out_perp = (uv + n * cos_theta) * etai_over_etat;
     let tmp = 1.0 - r_out_perp.length_squared();
