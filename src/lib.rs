@@ -1,5 +1,5 @@
 use rand::random;
-use std::rc::Rc;
+use std::{fmt::Debug, rc::Rc};
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Vec3 {
@@ -382,6 +382,7 @@ mod test_ray {
     }
 }
 
+#[derive(Debug)]
 pub struct HitRecord {
     p: Rc<Point3>,
     normal: Vec3,
@@ -536,7 +537,7 @@ impl Camera {
     }
 }
 
-pub trait Material {
+pub trait Material: std::fmt::Debug {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> ScatterResult;
 }
 
@@ -546,6 +547,7 @@ pub struct ScatterResult {
     scattered: Ray,
 }
 
+#[derive(Debug)]
 pub struct Lambertian {
     albedo: Color,
 }
@@ -573,6 +575,7 @@ impl Material for Lambertian {
     }
 }
 
+#[derive(Debug)]
 pub struct Metal {
     albedo: Color,
     fuzz: f64,
@@ -618,6 +621,7 @@ fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
     r_out_perp + r_out_parallel
 }
 
+#[derive(Debug)]
 pub struct Dielectric {
     ir: f64, // Index of Refraction
 }
