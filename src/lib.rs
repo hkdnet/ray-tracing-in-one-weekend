@@ -406,10 +406,10 @@ impl HitRecord {
             -outward_normal
         };
         HitRecord {
-            t,
             p,
-            material,
             normal,
+            material,
+            t,
             front_face,
         }
     }
@@ -615,6 +615,8 @@ fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
     let tmp = tmp.abs();
     let tmp = tmp.sqrt();
     let r_out_parallel = n * -tmp;
+    dbg!(uv, n, etai_over_etat);
+    dbg!(&r_out_perp, &r_out_parallel);
     r_out_perp + r_out_parallel
 }
 
