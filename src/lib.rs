@@ -603,3 +603,59 @@ impl Metal {
         Metal { albedo, fuzz }
     }
 }
+
+fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+    let mut cos_theta = (-uv).dot(n);
+    if cos_theta > 1.0 {
+        cos_theta = 1.0;
+    }
+
+    let r_out_perp = (uv + n * cos_theta) * etai_over_etat;
+    let tmp = 1.0 - r_out_perp.length_squared();
+    let tmp = tmp.abs();
+    let tmp = tmp.sqrt();
+    let r_out_parallel = n * -tmp;
+    r_out_perp + r_out_parallel
+}
+
+pub struct Dielectric {
+    ir: f64, // Index of Refraction
+}
+impl Dielectric {
+    pub fn new(index_of_refraction: f64) -> Self {
+        Dielectric {
+            ir: index_of_refraction,
+        }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> ScatterResult {
+        let attenuation = Color::new(1.0, 1.0, 1.0);
+        let refraction_ratio = if rec.front_face {
+            1.0 / self.ir
+        } else {
+            self.ir
+        };
+
+        let unit_direction = r_in.direction().unit_vector();
+
+        let cos_theta = (-&unit_direction).dot(&rec.normal).min(1.);
+        let sin_theta = (1. - cos_theta * cos_theta).sqrt();
+
+        let cannot_refract = refraction_ratio * sin_theta > 1.0;
+        let direction = if cannot_refract {
+            reflect(&unit_direction, &rec.normal)
+        } else {
+            refract(&unit_direction, &rec.normal, refraction_ratio)
+        };
+
+        let scattered = Ray::new(rec.p.clone(), Rc::new(direction));
+
+        ScatterResult {
+            reflect: true,
+            scattered,
+            attenuation,
+        }
+    }
+}
